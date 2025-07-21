@@ -892,29 +892,42 @@ void window_lower(xcb_window_t win)
 	xcb_configure_window(dpy, win, XCB_CONFIG_WINDOW_STACK_MODE, values);
 }
 
-void window_set_visibility(xcb_window_t win, bool visible)
-{
-	uint32_t values_off[] = {ROOT_EVENT_MASK & ~XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY};
-	uint32_t values_on[] = {ROOT_EVENT_MASK};
-	xcb_change_window_attributes(dpy, root, XCB_CW_EVENT_MASK, values_off);
-	if (visible) {
-		set_window_state(win, XCB_ICCCM_WM_STATE_NORMAL);
-		xcb_map_window(dpy, win);
-	} else {
-		xcb_unmap_window(dpy, win);
-		set_window_state(win, XCB_ICCCM_WM_STATE_ICONIC);
-	}
-	xcb_change_window_attributes(dpy, root, XCB_CW_EVENT_MASK, values_on);
+bool get_window_geometry(xcb_window_t win, int16_t *x, int16_t *y, uint16_t *w, uint16_t *h) {
+    xcb_get_geometry_reply_t *geom = xcb_get_geometry_reply(dpy, xcb_get_geometry(dpy, win), NULL);
+    if (geom) {
+        *x = geom->x;
+        *y = geom->y;
+        *w = geom->width;
+        *h = geom->height;
+        free(geom);
+        return true;
+    }
+    return false;
 }
 
-void window_hide(xcb_window_t win)
-{
-	window_set_visibility(win, false);
+void window_show(xcb_window_t win) {
+    xcb_map_window(dpy, win); // Ensure window is mapped
+    // Position is set in show_node
 }
 
-void window_show(xcb_window_t win)
-{
-	window_set_visibility(win, true);
+void window_hide(xcb_window_t win) {
+    int16_t x, y;
+    uint16_t w, h;
+    if (get_window_geometry(win, &x, &y, &w, &h)) {
+        xcb_configure_window(dpy, win, XCB_CONFIG_WINDOW_X, (uint32_t[]){-2 * w});
+    }
+}
+
+void window_set_visibility(xcb_window_t win, bool visible) {
+    uint32_t values_off[] = {ROOT_EVENT_MASK & ~XCB_EVENT_MASK_SUBSTRUCTURE_NOTIFY};
+    uint32_t values_on[] = {ROOT_EVENT_MASK};
+    xcb_change_window_attributes(dpy, root, XCB_CW_EVENT_MASK, values_off);
+    if (visible) {
+        window_show(win);
+    } else {
+        window_hide(win);
+    }
+    xcb_change_window_attributes(dpy, root, XCB_CW_EVENT_MASK, values_on);
 }
 
 void update_input_focus(void)

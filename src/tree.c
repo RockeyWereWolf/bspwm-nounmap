@@ -684,46 +684,44 @@ bool focus_node(monitor_t *m, desktop_t *d, node_t *n)
 	return true;
 }
 
-void hide_node(desktop_t *d, node_t *n)
-{
-	if (n == NULL || (!hide_sticky && n->sticky)) {
-		return;
-	} else {
-		if (!n->hidden) {
-			if (n->presel != NULL && d->layout != LAYOUT_MONOCLE) {
-				window_hide(n->presel->feedback);
-			}
-			if (n->client != NULL) {
-				window_hide(n->id);
-			}
-		}
-		if (n->client != NULL) {
-			n->client->shown = false;
-		}
-		hide_node(d, n->first_child);
-		hide_node(d, n->second_child);
-	}
+void show_node(desktop_t *d, node_t *n) {
+    if (n == NULL) {
+        return;
+    }
+    if (!n->hidden) {
+        if (n->client != NULL) {
+            // Restore position from floating_rectangle or tiled_rectangle
+            int16_t x = (n->client->state == STATE_FLOATING) ? n->client->floating_rectangle.x : n->client->tiled_rectangle.x;
+            int16_t y = (n->client->state == STATE_FLOATING) ? n->client->floating_rectangle.y : n->client->tiled_rectangle.y;
+            xcb_configure_window(dpy, n->id, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y,
+                                 (uint32_t[]){x, y});
+            window_show(n->id);
+            n->client->shown = true;
+        }
+        if (n->presel != NULL && d->layout != LAYOUT_MONOCLE) {
+            window_show(n->presel->feedback);
+        }
+    }
+    show_node(d, n->first_child);
+    show_node(d, n->second_child);
 }
 
-void show_node(desktop_t *d, node_t *n)
-{
-	if (n == NULL) {
-		return;
-	} else {
-		if (!n->hidden) {
-			if (n->client != NULL) {
-				window_show(n->id);
-			}
-			if (n->presel != NULL && d->layout != LAYOUT_MONOCLE) {
-				window_show(n->presel->feedback);
-			}
-		}
-		if (n->client != NULL) {
-			n->client->shown = true;
-		}
-		show_node(d, n->first_child);
-		show_node(d, n->second_child);
-	}
+void hide_node(desktop_t *d, node_t *n) {
+    if (n == NULL || (!hide_sticky && n->sticky)) {
+        return;
+    }
+    if (!n->hidden) {
+        if (n->presel != NULL && d->layout != LAYOUT_MONOCLE) {
+            window_hide(n->presel->feedback);
+        }
+        if (n->client != NULL) {
+            // No need to store position, as floating_rectangle or tiled_rectangle is maintained
+            window_hide(n->id);
+            n->client->shown = false;
+        }
+    }
+    hide_node(d, n->first_child);
+    hide_node(d, n->second_child);
 }
 
 node_t *make_node(uint32_t id)

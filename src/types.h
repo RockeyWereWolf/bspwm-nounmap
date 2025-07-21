@@ -225,6 +225,8 @@ typedef struct {
 	char name[MAXLEN];
 	unsigned int border_width;
 	bool urgent;
+	int16_t x; // Add x position
+    int16_t y; // Add y position
 	bool shown;
 	client_state_t state;
 	client_state_t last_state;
