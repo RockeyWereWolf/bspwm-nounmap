@@ -1,3 +1,9 @@
+# Note
+
+As mentioned in description on top-right this fork mimic dwm behavior on tag management. This is done by editig window/node show/hide functions to move node offscreen on workspace/tag switch.
+Yeah, there is an official hide_by_move branch but it seems to lack some recent commits and does this by adding an option to not unmap. Here there is no an option. It will work as in dwm always. Maybe I could break something with this change, so use on your own risk.
+I switched to bspwm only for more comfortable maintainance and configuration, comparing to dwm. But I was very used to it's tag management. Windows were always rendered and I could capture window on tag 5 while chatting in discord on tag 2. Thats why I decided to patch bspwm in this way.
+
 ## Description
 
 *bspwm* is a tiling window manager that represents windows as the leaves of a full binary tree.
